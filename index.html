@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Battle Island 3D</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#071018;
+    font-family:Arial,sans-serif;
+    touch-action:none;
+}
+
+#game{
+    position:fixed;
+    inset:0;
+}
+
+canvas{
+    display:block;
+    width:100%;
+    height:100%;
+}
+
+/* HUD */
+#hud{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    color:white;
+}
+
+#topbar{
+    position:absolute;
+    top:12px;
+    left:12px;
+    right:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.box{
+    background:rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:10px;
+    padding:8px 12px;
+    backdrop-filter:blur(5px);
+}
+
+#health{
+    width:180px;
+}
+
+.healthTitle{
+    font-size:11px;
+    margin-bottom:4px;
+}
+
+.healthBar{
+    height:8px;
+    background:#333;
+    border-radius:8px;
+    overflow:hidden;
+}
+
+#healthFill{
+    height:100%;
+    width:100%;
+    background:#20e070;
+}
+
+#players{
+    font-weight:bold;
+    font-size:14px;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:28px;
+    height:28px;
+}
+
+#crosshair:before,
+#crosshair:after{
+    content:"";
+    position:absolute;
+    background:white;
+    box-shadow:0 0 3px #000;
+}
+
+#crosshair:before{
+    width:2px;
+    height:28px;
+    left:13px;
+}
+
+#crosshair:after{
+    width:28px;
+    height:2px;
+    top:13px;
+}
+
+/* minimap */
+#map{
+    position:absolute;
+    right:14px;
+    top:65px;
+    width:130px;
+    height:130px;
+    border-radius:50%;
+    border:3px solid rgba(255,255,255,.8);
+    background:
+      radial-gradient(circle,#4d8742 0 35%,#315e38 36% 55%,#286078 56%);
+    overflow:hidden;
+}
+
+#mapPlayer{
+    position:absolute;
+    width:9px;
+    height:9px;
+    background:#fff;
+    border-radius:50%;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+}
+
+/* joystick */
+#joystickArea{
+    position:absolute;
+    left:25px;
+    bottom:25px;
+    width:145px;
+    height:145px;
+    pointer-events:auto;
+}
+
+#joystick{
+    position:absolute;
+    width:125px;
+    height:125px;
+    left:10px;
+    top:10px;
+    border-radius:50%;
+    background:rgba(255,255,255,.10);
+    border:2px solid rgba(255,255,255,.25);
+}
+
+#stick{
+    position:absolute;
+    width:58px;
+    height:58px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:rgba(255,255,255,.38);
+    border:2px solid rgba(255,255,255,.7);
+}
+
+/* buttons */
+.controls{
+    position:absolute;
+    right:20px;
+    bottom:20px;
+    display:flex;
+    gap:12px;
+    align-items:end;
+    pointer-events:auto;
+}
+
+.action{
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.5);
+    background:rgba(0,0,0,.55);
+    color:white;
+    font-weight:bold;
+    font-size:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+}
+
+#fire{
+    width:82px;
+    height:82px;
+    background:rgba(190,30,30,.75);
+    font-size:15px;
+}
+
+#weapon{
+    position:absolute;
+    right:22px;
+    bottom:115px;
+    font-weight:bold;
+}
+
+/* loading */
+#loading{
+    position:fixed;
+    inset:0;
+    background:#071018;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+}
+
+#loading h1{
+    font-size:28px;
+    margin-bottom:10px;
+}
+
+#loading p{
+    opacity:.7;
+}
+
+#start{
+    margin-top:25px;
+    padding:13px 28px;
+    border:0;
+    border-radius:10px;
+    background:#18a957;
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+}
+
+/* small screens */
+@media(max-width:600px){
+    #map{
+        width:100px;
+        height:100px;
+        top:58px;
+        right:8px;
+    }
+
+    #health{
+        width:130px;
+    }
+
+    #joystickArea{
+        transform:scale(.82);
+        transform-origin:bottom left;
+        left:8px;
+        bottom:8px;
+    }
+
+    .controls{
+        right:8px;
+        bottom:8px;
+        gap:7px;
+    }
+
+    .action{
+        width:55px;
+        height:55px;
+    }
+
+    #fire{
+        width:70px;
+        height:70px;
+    }
+
+    #weapon{
+        bottom:90px;
+        right:12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game"></div>
+
+<div id="loading">
+    <h1>⚡ BATTLE ISLAND 3D</h1>
+    <p>Loading island...</p>
+    <button id="start">START GAME</button>
+</div>
+
+<div id="hud">
+
+    <div id="topbar">
+
+        <div class="box" id="health">
+            <div class="healthTitle">HP 100</div>
+            <div class="healthBar">
+                <div id="healthFill"></div>
+            </div>
+        </div>
+
+        <div class="box" id="players">
+            👤 50 ALIVE
+        </div>
+
+    </div>
+
+    <div id="map">
+        <div id="mapPlayer"></div>
+    </div>
+
+    <div id="crosshair"></div>
+
+    <div id="joystickArea">
+        <div id="joystick">
+            <div id="stick"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+
+        <div class="action" id="crouch">
+            CROUCH
+        </div>
+
+        <div class="action" id="jump">
+            JUMP
+        </div>
+
+        <div class="action" id="run">
+            RUN
+        </div>
+
+        <div class="action" id="fire">
+            FIRE
+        </div>
+
+    </div>
+
+    <div class="box" id="weapon">
+        🔫 RIFLE
+    </div>
+
+</div>
+
+<!-- Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<script>
+
+let scene;
+let camera;
+let renderer;
+let player;
+
+let clock = new THREE.Clock();
+
+let moveX = 0;
+let moveZ = 0;
+
+let running = false;
+let crouching = false;
+
+let velocityY = 0;
+let grounded = true;
+
+const speedNormal = 0.085;
+const speedRun = 0.16;
+
+init();
+
+function init(){
+
+    scene = new THREE.Scene();
+
+    scene.background = new THREE.Color(0x78b8df);
+
+    scene.fog = new THREE.Fog(
+        0x78b8df,
+        100,
+        450
+    );
+
+    /* CAMERA */
+
+    camera = new THREE.PerspectiveCamera(
+        65,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+
+    /* R
